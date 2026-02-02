@@ -1,0 +1,19 @@
+
+{
+  "short_name": "PocketTrans",
+  "name": "Pocket Translator - Cute Snowboard Edition",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2554/2554165.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "minimal-ui"],
+  "theme_color": "#F3C5C5",
+  "background_color": "#FFF9F9",
+  "orientation": "any"
+}
