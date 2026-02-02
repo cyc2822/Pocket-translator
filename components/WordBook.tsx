@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { VocabularyWord } from '../types';
+import { speakText } from '../services/gemini';
 
 interface WordBookProps {
   words: VocabularyWord[];
@@ -63,16 +64,30 @@ const WordBook: React.FC<WordBookProps> = ({ words, onRemove, compact = false })
                     <i className="fas fa-times text-[8px]"></i>
                   </button>
                   
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-[#5D4A4A] text-base tracking-tight leading-none">{word.word}</span>
-                    {word.ipa && <span className="text-[#D6C1C1] text-[9px] font-bold">/{word.ipa}/</span>}
+                  <div className="flex justify-between items-start mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[#5D4A4A] text-base tracking-tight leading-none">{word.word}</span>
+                      {word.ipa && <span className="text-[#D6C1C1] text-[9px] font-bold">/{word.ipa}/</span>}
+                    </div>
+                    <button 
+                      onClick={() => speakText(word.word)}
+                      className="w-6 h-6 rounded-lg bg-[#FFF2F2] text-[#F3C5C5] flex items-center justify-center hover:bg-[#F3C5C5] hover:text-white transition-all active:scale-90"
+                    >
+                      <i className="fas fa-volume-up text-[9px]"></i>
+                    </button>
                   </div>
                   
                   <p className="text-[#A68F8F] text-[12px] font-playful leading-relaxed">{word.meaning}</p>
                   
                   {word.example && (
-                    <div className="mt-3 text-[10px] text-[#F3C5C5] font-bold bg-[#FFF2F2]/40 p-3 rounded-[1rem] border-l-2 border-[#F3C5C5]">
-                      "{word.example}"
+                    <div className="mt-3 text-[10px] text-[#F3C5C5] font-bold bg-[#FFF2F2]/40 p-3 rounded-[1rem] border-l-2 border-[#F3C5C5] flex justify-between items-end gap-2 group/ex">
+                      <p className="flex-1 italic">"{word.example}"</p>
+                      <button 
+                        onClick={() => speakText(word.example)}
+                        className="opacity-0 group-hover/ex:opacity-100 transition-opacity text-[#F3C5C5]/60 hover:text-[#F3C5C5]"
+                      >
+                        <i className="fas fa-volume-up text-[10px]"></i>
+                      </button>
                     </div>
                   )}
                 </div>
