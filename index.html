@@ -10,7 +10,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 引入 Quicksand 和 站酷快乐体 */
         @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;500;700&family=ZCOOL+KuaiLe&display=swap');
         
         body {
@@ -21,7 +20,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 极致精致化：基础字号统一为 14px，大屏幕也不变大 */
         html { font-size: 14px; }
 
         .custom-scrollbar::-webkit-scrollbar {
@@ -48,28 +46,24 @@
         .animate-spin-slow {
             animation: spin-slow 12s linear infinite;
         }
-
-        @layer utilities {
-          .bg-pocket-pink { background-color: #F3C5C5; }
-          .text-pocket-pink { color: #F3C5C5; }
-          .border-pocket-pink { border-color: #F3C5C5; }
-        }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "@google/genai": "https://esm.sh/@google/genai@1.39.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
-    "react-dom": "https://esm.sh/react-dom@^19.2.4"
+    "react/": "https://esm.sh/react@^19.2.4/"
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="root"></div>
+    <!-- 关键：必须告诉浏览器加载你的主程序 -->
+    <script type="module" src="./index.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -77,6 +71,5 @@
         });
       }
     </script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>
