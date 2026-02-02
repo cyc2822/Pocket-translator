@@ -36,8 +36,8 @@ async function decodeAudioData(
 export const translateAndExtract = async (text: string): Promise<TranslationResult> => {
   const apiKey = process.env.API_KEY;
   
-  if (!apiKey || apiKey === "undefined" || apiKey === "") {
-    console.error("DEBUG: API_KEY is not set correctly in the environment.");
+  if (!apiKey || apiKey === "undefined") {
+    console.error("DEBUG: API_KEY is missing. Current value:", apiKey);
     throw new Error("API_KEY_MISSING");
   }
 
@@ -74,27 +74,23 @@ export const translateAndExtract = async (text: string): Promise<TranslationResu
       }
     });
 
-    let jsonStr = response.text || '{}';
-    jsonStr = jsonStr.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    
-    const data = JSON.parse(jsonStr);
+    const textResponse = response.text;
+    if (!textResponse) throw new Error("EMPTY_RESPONSE");
+
+    const data = JSON.parse(textResponse);
     return {
       ...data,
       sourceText: text
     };
   } catch (err: any) {
-    console.error("Gemini Translation Error Details:", {
-      message: err.message,
-      reason: err.reason,
-      status: err.status
-    });
+    console.error("Gemini Error:", err.message || err);
     throw err;
   }
 };
 
 export const speakText = async (text: string) => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === "undefined" || apiKey === "") return;
+  if (!apiKey || apiKey === "undefined") return;
 
   const ai = new GoogleGenAI({ apiKey });
   try {
