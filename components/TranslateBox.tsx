@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { translateAndExtract } from '../services/gemini';
+import { translateAndExtract, speakText } from '../services/gemini';
 import { TranslationResult, VocabularyWord } from '../types';
 
 interface TranslateBoxProps {
@@ -11,6 +11,7 @@ interface TranslateBoxProps {
 const TranslateBox: React.FC<TranslateBoxProps> = ({ onWordsExtracted, compact = false }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const [result, setResult] = useState<TranslationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -35,6 +36,13 @@ const TranslateBox: React.FC<TranslateBoxProps> = ({ onWordsExtracted, compact =
     }
   };
 
+  const handleSpeak = async () => {
+    if (!result || speaking) return;
+    setSpeaking(true);
+    await speakText(result.translatedText);
+    setTimeout(() => setSpeaking(false), 2000);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setInput(val);
@@ -42,17 +50,12 @@ const TranslateBox: React.FC<TranslateBoxProps> = ({ onWordsExtracted, compact =
     timerRef.current = setTimeout(() => performTranslation(val), 800);
   };
 
-  // 极致紧凑的字号自适应逻辑
   const getDynamicFontSize = (text: string) => {
     const len = text.length;
-    if (compact) {
-      if (len < 15) return 'text-sm';
-      return 'text-xs';
-    }
-    // 非紧凑模式（桌面端结果区）
-    if (len < 15) return 'text-lg md:text-xl'; // 单词
-    if (len < 50) return 'text-base md:text-lg'; // 短句
-    return 'text-sm md:text-base'; // 长段落：回归到正常的 14-16px，不再巨大
+    if (compact) return len < 15 ? 'text-sm' : 'text-xs';
+    if (len < 15) return 'text-lg md:text-xl';
+    if (len < 50) return 'text-base md:text-lg';
+    return 'text-sm md:text-base';
   };
 
   return (
@@ -85,7 +88,14 @@ const TranslateBox: React.FC<TranslateBoxProps> = ({ onWordsExtracted, compact =
           
           <div className="flex justify-between items-center mb-2 relative z-10">
             <span className="text-[8px] font-black uppercase tracking-[0.2em] opacity-80">{result.detectedLanguage}</span>
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
+              <button 
+                onClick={handleSpeak} 
+                disabled={speaking}
+                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${speaking ? 'bg-white text-[#F3C5C5] scale-110' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+              >
+                <i className={`fas ${speaking ? 'fa-volume-up animate-pulse' : 'fa-volume-low'} text-[9px]`}></i>
+              </button>
               <button onClick={() => navigator.clipboard.writeText(result.translatedText)} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 active:scale-90 transition-all">
                 <i className="far fa-copy text-[9px]"></i>
               </button>
@@ -100,9 +110,14 @@ const TranslateBox: React.FC<TranslateBoxProps> = ({ onWordsExtracted, compact =
             <div className="mt-4 pt-4 border-t border-white/10 space-y-2 relative z-10">
               {result.vocabulary.map((v, i) => (
                 <div key={i} className="bg-white/10 p-2.5 rounded-[1rem] backdrop-blur-sm border border-white/5 flex flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-black">{v.word}</span>
-                    <i className="fas fa-snowflake text-[6px] text-white/40"></i>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-black">{v.word}</span>
+                      <i className="fas fa-snowflake text-[6px] text-white/40"></i>
+                    </div>
+                    <button onClick={() => speakText(v.word)} className="text-white/60 hover:text-white transition-colors">
+                      <i className="fas fa-volume-up text-[8px]"></i>
+                    </button>
                   </div>
                   <p className="text-[10px] font-medium opacity-90 leading-tight">{v.meaning}</p>
                 </div>
