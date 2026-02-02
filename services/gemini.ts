@@ -36,8 +36,8 @@ async function decodeAudioData(
 export const translateAndExtract = async (text: string): Promise<TranslationResult> => {
   const apiKey = process.env.API_KEY;
   
-  if (!apiKey || apiKey === "undefined") {
-    console.error("DEBUG: API_KEY is undefined. Check Vercel Environment Variables.");
+  if (!apiKey || apiKey === "undefined" || apiKey === "") {
+    console.error("DEBUG: API_KEY is not set correctly in the environment.");
     throw new Error("API_KEY_MISSING");
   }
 
@@ -46,10 +46,7 @@ export const translateAndExtract = async (text: string): Promise<TranslationResu
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Detect the language and translate. 
-      English -> Chinese. 
-      Other -> English. 
-      Extract 1-3 useful B2+ level words.
+      contents: `You are a professional linguist. Translate the text. If English, translate to Chinese. If not English, translate to English. Extract 1-3 useful B2+ level words.
       Text: "${text}"`,
       config: {
         responseMimeType: "application/json",
@@ -78,7 +75,6 @@ export const translateAndExtract = async (text: string): Promise<TranslationResu
     });
 
     let jsonStr = response.text || '{}';
-    // Remove potential markdown wrappers
     jsonStr = jsonStr.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
     
     const data = JSON.parse(jsonStr);
@@ -86,21 +82,25 @@ export const translateAndExtract = async (text: string): Promise<TranslationResu
       ...data,
       sourceText: text
     };
-  } catch (err) {
-    console.error("Gemini Translation Error:", err);
+  } catch (err: any) {
+    console.error("Gemini Translation Error Details:", {
+      message: err.message,
+      reason: err.reason,
+      status: err.status
+    });
     throw err;
   }
 };
 
 export const speakText = async (text: string) => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === "undefined") return;
+  if (!apiKey || apiKey === "undefined" || apiKey === "") return;
 
   const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `Say clearly: ${text}` }] }],
+      contents: [{ parts: [{ text: `Speak: ${text}` }] }],
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
