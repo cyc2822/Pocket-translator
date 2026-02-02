@@ -34,65 +34,78 @@ async function decodeAudioData(
 }
 
 export const translateAndExtract = async (text: string): Promise<TranslationResult> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
   
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Detect the language of the following text and perform these actions:
-    1. If it's English, translate it to Chinese.
-    2. If it's NOT English (especially Spanish or Italian), translate it to English.
-    3. Extract 1-3 useful vocabulary words or phrases from the source text that are meaningful for language learners.
-    
-    CRITICAL FILTERING RULES:
-    - ONLY extract words or idiomatic expressions that are academic, professional, or relatively complex (B2-C2 level).
-    - If the text only contains basic words, return an empty vocabulary array.
-    
-    Text: "${text}"`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          translatedText: { type: Type.STRING },
-          detectedLanguage: { type: Type.STRING },
-          sourceText: { type: Type.STRING },
-          vocabulary: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                word: { type: Type.STRING },
-                ipa: { type: Type.STRING },
-                meaning: { type: Type.STRING },
-                example: { type: Type.STRING }
-              },
-              required: ["word", "meaning", "example"]
-            }
-          }
-        },
-        required: ["translatedText", "detectedLanguage", "vocabulary"]
-      }
-    }
-  });
+  if (!apiKey || apiKey === "undefined") {
+    console.error("DEBUG: API_KEY is undefined. Check Vercel Environment Variables.");
+    throw new Error("API_KEY_MISSING");
+  }
 
-  const data = JSON.parse(response.text || '{}');
-  return {
-    ...data,
-    sourceText: text
-  };
+  const ai = new GoogleGenAI({ apiKey });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Detect the language and translate. 
+      English -> Chinese. 
+      Other -> English. 
+      Extract 1-3 useful B2+ level words.
+      Text: "${text}"`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            translatedText: { type: Type.STRING },
+            detectedLanguage: { type: Type.STRING },
+            vocabulary: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  word: { type: Type.STRING },
+                  ipa: { type: Type.STRING },
+                  meaning: { type: Type.STRING },
+                  example: { type: Type.STRING }
+                },
+                required: ["word", "meaning", "example"]
+              }
+            }
+          },
+          required: ["translatedText", "detectedLanguage", "vocabulary"]
+        }
+      }
+    });
+
+    let jsonStr = response.text || '{}';
+    // Remove potential markdown wrappers
+    jsonStr = jsonStr.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+    
+    const data = JSON.parse(jsonStr);
+    return {
+      ...data,
+      sourceText: text
+    };
+  } catch (err) {
+    console.error("Gemini Translation Error:", err);
+    throw err;
+  }
 };
 
 export const speakText = async (text: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
+  if (!apiKey || apiKey === "undefined") return;
+
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `Say clearly and naturally: ${text}` }] }],
+      contents: [{ parts: [{ text: `Say clearly: ${text}` }] }],
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' }, // Kore has a very clear, modern tone
+            prebuiltVoiceConfig: { voiceName: 'Kore' },
           },
         },
       },
